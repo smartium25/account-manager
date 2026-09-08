@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kn Foundation Account Manager</title>
+<style>
+:root{--blue:#1a73e8;--blue2:#0b57d0;--text:#202124;--muted:#5f6368;--border:#dadce0;--bg:#fff;--soft:#f8fafd;--danger:#d93025;--ok:#188038}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:var(--bg)}
+body{display:flex;justify-content:center;padding:28px 18px}
+.shell{width:min(1100px,100%)}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:40px;height:40px;object-fit:contain}
+.brandmark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#1a73e8,#7aa9ff);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+.brandname{font-weight:700;font-size:18px}
+.language{border:1px solid var(--border);background:#fff;border-radius:20px;padding:9px 13px;color:var(--muted);cursor:pointer}
+.card{border:1px solid var(--border);border-radius:26px;min-height:660px;display:grid;grid-template-columns:44% 56%;overflow:hidden;box-shadow:0 8px 28px #0000000b}
+.left{padding:58px 52px;background:linear-gradient(180deg,#f8fbff,#fff)}
+.right{padding:48px 52px;background:#fff}
+h1{font-size:38px;line-height:1.12;font-weight:500;margin:24px 0 14px;letter-spacing:-.5px}
+.sub{font-size:16px;line-height:1.6;color:var(--muted);max-width:430px}
+.pill{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:#eaf2ff;color:#185abc;font-size:12px;font-weight:700}
+.form-title{font-size:28px;font-weight:500;margin:0 0 9px}
+.form-sub{font-size:14px;color:var(--muted);margin-bottom:25px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;margin:0 0 7px}
+.input{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:9px;font-size:16px;outline:0;background:#fff}
+.input:focus{border:2px solid var(--blue);padding:12px 13px}
+.hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:23px}
+.secondary{border:0;background:transparent;color:var(--blue2);font-weight:700;cursor:pointer;padding:11px 5px}
+.primary{border:0;background:var(--blue);color:#fff;border-radius:8px;padding:12px 20px;font-weight:700;cursor:pointer}
+.primary:hover{background:var(--blue2)}
+.primary:disabled{opacity:.55;cursor:not-allowed}
+.danger{border:0;background:var(--danger);color:#fff;border-radius:8px;padding:12px 20px;font-weight:700;cursor:pointer}
+.danger:hover{filter:brightness(.94)}
+.status{min-height:19px;margin-top:13px;font-size:13px}
+.status.ok{color:var(--ok)}
+.status.err{color:var(--danger)}
+.profile{text-align:center;padding:5px 0 20px}
+.avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;border:1px solid var(--border);background:#eaf2ff;margin-bottom:14px}
+.username{font-size:22px;font-weight:600}
+.email{font-size:13px;color:var(--muted);margin-top:5px}
+.manager-section{border-top:1px solid #eee;padding-top:24px;margin-top:24px}
+.manager-section h3{font-size:18px;font-weight:500;margin:0 0 7px}
+.manager-section p{font-size:13px;color:var(--muted);margin:0 0 15px;line-height:1.5}
+.file-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.file-row input[type=file]{max-width:100%;font-size:13px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.open{display:flex}
+.modalbox{width:min(520px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 20px 60px #0003}
+.modalbox h2{margin:0 0 8px;font-weight:500}
+.modalbox p{color:#4b4f52;line-height:1.55;font-size:14px;margin:0 0 18px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.close{float:right;width:34px;height:34px;border:0;border-radius:50%;background:#f1f3f4;cursor:pointer;font-size:20px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:28px;font-size:12px;color:var(--muted);gap:12px}
+.hidden{display:none!important}
+@media(max-width:820px){body{padding:12px}.card{grid-template-columns:1fr}.left{padding:32px 26px}.right{padding:30px 26px}.card{min-height:auto}h1{font-size:32px}.top{margin-bottom:12px}}
+@media(max-width:520px){.actions,.foot{align-items:stretch;flex-direction:column}.primary,.danger{width:100%}.secondary{align-self:flex-start}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <div class="brand">
+      <img id="logo" src="Kn.png" alt="Kn" onerror="this.replaceWith(document.getElementById('brandmark').content.cloneNode(true))">
+      <template id="brandmark"><div class="brandmark">Kn</div></template>
+      <span class="brandname">Kn Foundation Account Manager</span>
+    </div>
+    <button class="language" id="langBtn">English</button>
+  </div>
+
+  <section class="card">
+    <div class="left">
+      <span class="pill" id="pill">Kn Foundation</span>
+      <h1 id="heroTitle">Manage your account</h1>
+      <p class="sub" id="heroSub">Manage the profile connected to your Kn Foundation Account.</p>
+      <p class="sub" id="heroNote">Your changes apply to the central Kn Foundation account used by connected services.</p>
+    </div>
+
+    <div class="right">
+      <div class="profile">
+        <img id="avatar" class="avatar" alt="Profile picture">
+        <div id="username" class="username">Cargando...</div>
+        <div id="email" class="email"></div>
+      </div>
+
+      <div class="manager-section">
+        <h3 id="pfpTitle">Profile picture</h3>
+        <p id="pfpSub">Choose a new JPG, PNG, WEBP or GIF image.</p>
+        <div class="file-row">
+          <input id="pfpFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+          <button class="primary" id="pfpBtn">Change photo</button>
+        </div>
+        <div id="pfpStatus" class="status"></div>
+      </div>
+
+      <div class="manager-section">
+        <h3 id="passTitle">Password</h3>
+        <p id="passSub">Change the password used to sign in to your Kn Foundation Account.</p>
+        <div class="field">
+          <label id="currentLabel" for="currentPassword">Current password</label>
+          <input class="input" id="currentPassword" type="password" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label id="newLabel" for="newPassword">New password</label>
+          <input class="input" id="newPassword" type="password" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label id="confirmLabel" for="confirmPassword">Confirm new password</label>
+          <input class="input" id="confirmPassword" type="password" autocomplete="new-password">
+        </div>
+        <button class="primary" id="passBtn">Change password</button>
+        <div id="passStatus" class="status"></div>
+      </div>
+
+      <div class="manager-section">
+        <h3 id="deleteTitle">Delete account</h3>
+        <p id="deleteSub">This permanently deletes your Kn Foundation Account and invalidates its sessions.</p>
+        <button class="danger" id="deleteBtn">Delete account</button>
+        <div id="deleteStatus" class="status"></div>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" id="logoutBtn">Sign out</button>
+      </div>
+
+      <div class="foot">
+        <span id="footText">Kn Foundation Account Manager</span>
+        <span>2026</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="deleteModal">
+  <div class="modalbox">
+    <button class="close" id="closeDelete">×</button>
+    <h2 id="modalTitle">Delete your account?</h2>
+    <p id="modalText">To confirm permanent deletion, enter your current password.</p>
+    <div class="field">
+      <label id="modalPasswordLabel" for="deletePassword">Current password</label>
+      <input class="input" id="deletePassword" type="password" autocomplete="current-password">
+    </div>
+    <div id="modalStatus" class="status"></div>
+    <div class="modal-actions">
+      <button class="secondary" id="cancelDelete">Cancel</button>
+      <button class="danger" id="confirmDelete">Delete permanently</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL="http://127.0.0.1:8000";
+const AUTH_PAGE="https://smartium25.github.io/auth";
+const TOKEN_KEY="knfoundation_token";
+let token=localStorage.getItem(TOKEN_KEY);
+let lang=localStorage.getItem("knLang")||"es";
+const $=id=>document.getElementById(id);
+
+const T={
+ es:{
+  lang:"English",pill:"Kn Foundation",heroTitle:"Administra tu cuenta",heroSub:"Administra el perfil conectado a tu cuenta de Kn Foundation.",heroNote:"Los cambios se aplican a la cuenta central de Kn Foundation que utilizan los servicios conectados.",pfpTitle:"Foto de perfil",pfpSub:"Elige una nueva imagen JPG, PNG, WEBP o GIF.",pfpBtn:"Cambiar foto",passTitle:"Contraseña",passSub:"Cambia la contraseña utilizada para iniciar sesión en tu cuenta de Kn Foundation.",current:"Contraseña actual",newp:"Nueva contraseña",confirm:"Confirmar nueva contraseña",passBtn:"Cambiar contraseña",deleteTitle:"Eliminar cuenta",deleteSub:"Esto elimina permanentemente tu cuenta de Kn Foundation e invalida sus sesiones.",deleteBtn:"Eliminar cuenta",logout:"Cerrar sesión",foot:"Kn Foundation Account Manager",loading:"Cargando...",choose:"Selecciona una imagen.",wrongFile:"Formato de imagen no permitido.",uploading:"Subiendo imagen...",pfpOk:"Foto de perfil actualizada correctamente.",required:"Completa todos los campos.",weak:"La nueva contraseña debe tener al menos 8 caracteres.",mismatch:"Las contraseñas no coinciden.",changing:"Cambiando contraseña...",passOk:"Contraseña cambiada correctamente. Inicia sesión de nuevo.",deleteModal:"¿Eliminar tu cuenta?",deleteText:"Para confirmar la eliminación permanente, introduce tu contraseña actual.",deletePass:"Contraseña actual",cancel:"Cancelar",deletePermanent:"Eliminar permanentemente",deleting:"Eliminando cuenta...",network:"No se pudo conectar con Kn Foundation.",session:"Sesión inválida o expirada."},
+ en:{
+  lang:"Español",pill:"Kn Foundation",heroTitle:"Manage your account",heroSub:"Manage the profile connected to your Kn Foundation Account.",heroNote:"Your changes apply to the central Kn Foundation account used by connected services.",pfpTitle:"Profile picture",pfpSub:"Choose a new JPG, PNG, WEBP or GIF image.",pfpBtn:"Change photo",passTitle:"Password",passSub:"Change the password used to sign in to your Kn Foundation Account.",current:"Current password",newp:"New password",confirm:"Confirm new password",passBtn:"Change password",deleteTitle:"Delete account",deleteSub:"This permanently deletes your Kn Foundation Account and invalidates its sessions.",deleteBtn:"Delete account",logout:"Sign out",foot:"Kn Foundation Account Manager",loading:"Loading...",choose:"Select an image.",wrongFile:"Image format is not allowed.",uploading:"Uploading image...",pfpOk:"Profile picture updated successfully.",required:"Complete all fields.",weak:"The new password must be at least 8 characters.",mismatch:"Passwords do not match.",changing:"Changing password...",passOk:"Password changed successfully. Please sign in again.",deleteModal:"Delete your account?",deleteText:"To confirm permanent deletion, enter your current password.",deletePass:"Current password",cancel:"Cancel",deletePermanent:"Delete permanently",deleting:"Deleting account...",network:"Could not connect to Kn Foundation.",session:"Session is invalid or expired."}
+};
+
+function setStatus(id,text,type=""){
+ const el=$(id); el.className="status"+(type?" "+type:""); el.textContent=text||"";
+}
+
+function redirectLogin(){
+ const current=window.location.href;
+ const url=`${AUTH_PAGE}/?redirect=${encodeURIComponent(current)}`;
+ window.location.replace(url);
+}
+
+function authHeaders(extra={}){
+ return {"Authorization":`Bearer ${token}`,...extra};
+}
+
+function apiError(data,fallback){
+ return (data&&data.detail)||(data&&data.message)||fallback;
+}
+
+function applyLanguage(){
+ const t=T[lang];
+ document.documentElement.lang=lang;
+ $("langBtn").textContent=t.lang;
+ $("pill").textContent=t.pill;
+ $("heroTitle").textContent=t.heroTitle;
+ $("heroSub").textContent=t.heroSub;
+ $("heroNote").textContent=t.heroNote;
+ $("pfpTitle").textContent=t.pfpTitle;
+ $("pfpSub").textContent=t.pfpSub;
+ $("pfpBtn").textContent=t.pfpBtn;
+ $("passTitle").textContent=t.passTitle;
+ $("passSub").textContent=t.passSub;
+ $("currentLabel").textContent=t.current;
+ $("newLabel").textContent=t.newp;
+ $("confirmLabel").textContent=t.confirm;
+ $("passBtn").textContent=t.passBtn;
+ $("deleteTitle").textContent=t.deleteTitle;
+ $("deleteSub").textContent=t.deleteSub;
+ $("deleteBtn").textContent=t.deleteBtn;
+ $("logoutBtn").textContent=t.logout;
+ $("footText").textContent=t.foot;
+ $("modalTitle").textContent=t.deleteModal;
+ $("modalText").textContent=t.deleteText;
+ $("modalPasswordLabel").textContent=t.deletePass;
+ $("cancelDelete").textContent=t.cancel;
+ $("confirmDelete").textContent=t.deletePermanent;
+}
+
+async function loadAccount(){
+ if(!token){redirectLogin();return}
+ try{
+  const r=await fetch(`${API_URL}/api/me`,{headers:authHeaders()});
+  if(r.status===401||r.status===403){localStorage.removeItem(TOKEN_KEY);token=null;redirectLogin();return}
+  const data=await r.json();
+  if(!r.ok)throw new Error(apiError(data,T[lang].session));
+  const u=data.user||data;
+  $("username").textContent=u.username||"Usuario";
+  $("email").textContent=u.email||"";
+  const pfp=u.profile_picture||u.pfp;
+  if(pfp){
+   $("avatar").src=pfp.startsWith("http")?pfp:`${API_URL}${pfp}`;
+  }else{
+   $("avatar").src="";
+  }
+ }catch(e){
+  $("username").textContent=T[lang].session;
+  console.error(e);
+ }
+}
+
+async function changePfp(){
+ setStatus("pfpStatus","");
+ const file=$("pfpFile").files[0];
+ if(!file){setStatus("pfpStatus",T[lang].choose,"err");return}
+ const allowed=["image/jpeg","image/png","image/webp","image/gif"];
+ if(!allowed.includes(file.type)){setStatus("pfpStatus",T[lang].wrongFile,"err");return}
+ const fd=new FormData();
+ fd.append("file",file);
+ setStatus("pfpStatus",T[lang].uploading);
+ try{
+  const r=await fetch(`${API_URL}/api/upload_pfp`,{method:"POST",headers:authHeaders(),body:fd});
+  const data=await r.json();
+  if(r.status===401||r.status===403){localStorage.removeItem(TOKEN_KEY);token=null;redirectLogin();return}
+  if(!r.ok)throw new Error(apiError(data,T[lang].network));
+  setStatus("pfpStatus",T[lang].pfpOk,"ok");
+  $("pfpFile").value="";
+  await loadAccount();
+ }catch(e){setStatus("pfpStatus",e.message||T[lang].network,"err")}
+}
+
+async function changePassword(){
+ const current=$("currentPassword").value;
+ const next=$("newPassword").value;
+ const confirm=$("confirmPassword").value;
+ setStatus("passStatus","");
+ if(!current||!next||!confirm){setStatus("passStatus",T[lang].required,"err");return}
+ if(next.length<8){setStatus("passStatus",T[lang].weak,"err");return}
+ if(next!==confirm){setStatus("passStatus",T[lang].mismatch,"err");return}
+ const fd=new FormData();
+ fd.append("current_password",current);
+ fd.append("new_password",next);
+ setStatus("passStatus",T[lang].changing);
+ try{
+  const r=await fetch(`${API_URL}/api/change-password`,{method:"POST",headers:authHeaders(),body:fd});
+  const data=await r.json();
+  if(r.status===401||r.status===403){setStatus("passStatus",apiError(data,T[lang].session),"err");return}
+  if(!r.ok)throw new Error(apiError(data,T[lang].network));
+  if(data.token)localStorage.setItem(TOKEN_KEY,data.token);
+  else localStorage.removeItem(TOKEN_KEY);
+  token=data.token||null;
+  $("currentPassword").value="";
+  $("newPassword").value="";
+  $("confirmPassword").value="";
+  if(!token){setStatus("passStatus",T[lang].passOk,"ok");setTimeout(redirectLogin,1200);return}
+  setStatus("passStatus",T[lang].passOk,"ok");
+ }catch(e){setStatus("passStatus",e.message||T[lang].network,"err")}
+}
+
+function openDelete(){
+ $("deletePassword").value="";
+ setStatus("modalStatus","");
+ $("deleteModal").classList.add("open");
+ setTimeout(()=>$("deletePassword").focus(),50);
+}
+function closeDelete(){$("deleteModal").classList.remove("open")}
+
+async function confirmDelete(){
+ const password=$("deletePassword").value;
+ if(!password){setStatus("modalStatus",T[lang].required,"err");return}
+ const fd=new FormData();
+ fd.append("password",password);
+ setStatus("modalStatus",T[lang].deleting);
+ try{
+  const r=await fetch(`${API_URL}/api/account`,{method:"DELETE",headers:authHeaders(),body:fd});
+  const data=await r.json();
+  if(!r.ok)throw new Error(apiError(data,T[lang].network));
+  localStorage.removeItem(TOKEN_KEY);
+  token=null;
+  window.location.replace(AUTH_PAGE);
+ }catch(e){setStatus("modalStatus",e.message||T[lang].network,"err")}
+}
+
+async function logout(){
+ try{if(token)await fetch(`${API_URL}/api/logout`,{method:"POST",headers:authHeaders()})}catch(e){console.error(e)}
+ localStorage.removeItem(TOKEN_KEY);
+ token=null;
+ redirectLogin();
+}
+
+$("langBtn").onclick=()=>{lang=lang==="es"?"en":"es";localStorage.setItem("knLang",lang);applyLanguage();loadAccount()};
+$("pfpBtn").onclick=changePfp;
+$("passBtn").onclick=changePassword;
+$("deleteBtn").onclick=openDelete;
+$("closeDelete").onclick=closeDelete;
+$("cancelDelete").onclick=closeDelete;
+$("confirmDelete").onclick=confirmDelete;
+$("deleteModal").onclick=e=>{if(e.target===$("deleteModal"))closeDelete()};
+$("logoutBtn").onclick=logout;
+
+applyLanguage();
+loadAccount();
+</script>
+</body>
+</html>
