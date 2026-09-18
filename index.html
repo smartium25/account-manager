@@ -352,6 +352,12 @@ body{
     background:#a8322c;
 }
 
+.danger:disabled,
+.secondary:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
 /* =========================================================
    STATUS
    ========================================================= */
@@ -609,10 +615,6 @@ body{
 
     <section class="card">
 
-        <!-- =============================================
-             CUENTA
-             ============================================= -->
-
         <div class="account-header">
 
             <div class="avatar-wrap">
@@ -658,10 +660,6 @@ body{
         </div>
 
 
-        <!-- =============================================
-             CONTENIDO
-             ============================================= -->
-
         <div class="content">
 
             <div class="intro">
@@ -679,9 +677,7 @@ body{
 
             <div class="settings">
 
-                <!-- =====================================
-                     PFP
-                     ===================================== -->
+                <!-- FOTO DE PERFIL -->
 
                 <section class="section full">
 
@@ -721,9 +717,7 @@ body{
                 </section>
 
 
-                <!-- =====================================
-                     PASSWORD
-                     ===================================== -->
+                <!-- CONTRASEÑA -->
 
                 <section class="section">
 
@@ -807,9 +801,7 @@ body{
                 </section>
 
 
-                <!-- =====================================
-                     CUENTA
-                     ===================================== -->
+                <!-- CUENTA -->
 
                 <section class="section">
 
@@ -883,7 +875,7 @@ body{
 
 
 <!-- =====================================================
-     MODAL ELIMINAR
+     MODAL ELIMINAR CUENTA
      ===================================================== -->
 
 <div
@@ -896,6 +888,7 @@ body{
         <button
             class="close"
             id="closeDelete"
+            aria-label="Cerrar"
         >
             ×
         </button>
@@ -905,23 +898,24 @@ body{
         </h2>
 
         <p id="modalText">
-            Para confirmar la eliminación permanente, introduce tu contraseña actual.
+            Esta acción es permanente. Escribe ELIMINAR para confirmar.
         </p>
 
         <div class="field">
 
             <label
-                id="modalPasswordLabel"
-                for="deletePassword"
+                id="modalConfirmLabel"
+                for="deleteConfirm"
             >
-                Contraseña actual
+                Confirmación
             </label>
 
             <input
                 class="input"
-                id="deletePassword"
-                type="password"
-                autocomplete="current-password"
+                id="deleteConfirm"
+                type="text"
+                autocomplete="off"
+                placeholder="ELIMINAR"
             >
 
         </div>
@@ -960,7 +954,7 @@ const API_URL =
     "https://programs-sweet-limited-files.trycloudflare.com";
 
 const AUTH_PAGE =
-    "https://smartium25.github.io/auth";
+    "https://smartium25.github.io/auth/";
 
 const TOKEN_KEY =
     "knfoundation_token";
@@ -977,6 +971,32 @@ let lang =
 
 const $ =
     id => document.getElementById(id);
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function setStatus(id, message, type = ""){
+
+    const element = $(id);
+
+    if(!element){
+        return;
+    }
+
+    element.textContent =
+        message || "";
+
+    element.classList.remove(
+        "ok",
+        "err"
+    );
+
+    if(type){
+        element.classList.add(type);
+    }
+}
 
 
 /* =========================================================
@@ -1018,12 +1038,14 @@ const T = {
         passOk:"Contraseña cambiada correctamente.",
         deleting:"Eliminando cuenta...",
         deleteModal:"¿Eliminar tu cuenta?",
-        deleteText:"Para confirmar la eliminación permanente, introduce tu contraseña actual.",
-        deletePass:"Contraseña actual",
+        deleteText:"Esta acción es permanente. Escribe ELIMINAR para confirmar.",
+        deleteConfirm:"Confirmación",
         cancel:"Cancelar",
         deletePermanent:"Eliminar permanentemente",
         network:"No se pudo conectar con Kn Foundation.",
-        session:"Sesión inválida o expirada."
+        session:"Sesión inválida o expirada.",
+        confirmDeleteWord:"ELIMINAR",
+        deletingSuccess:"Cuenta eliminada correctamente."
     },
 
     en:{
@@ -1059,12 +1081,14 @@ const T = {
         passOk:"Password changed successfully.",
         deleting:"Deleting account...",
         deleteModal:"Delete your account?",
-        deleteText:"To confirm permanent deletion, enter your current password.",
-        deletePass:"Current password",
+        deleteText:"This action is permanent. Type DELETE to confirm.",
+        deleteConfirm:"Confirmation",
         cancel:"Cancel",
         deletePermanent:"Delete permanently",
         network:"Could not connect to Kn Foundation.",
-        session:"Session is invalid or expired."
+        session:"Session is invalid or expired.",
+        confirmDeleteWord:"DELETE",
+        deletingSuccess:"Account deleted successfully."
     }
 
 };
@@ -1151,19 +1175,22 @@ function applyLanguage(){
     $("modalText").textContent =
         t.deleteText;
 
-    $("modalPasswordLabel").textContent =
-        t.deletePass;
+    $("modalConfirmLabel").textContent =
+        t.deleteConfirm;
 
     $("cancelDelete").textContent =
         t.cancel;
 
     $("confirmDelete").textContent =
         t.deletePermanent;
+
+    $("deleteConfirm").placeholder =
+        t.confirmDeleteWord;
 }
 
 
 /* =========================================================
-   REDIRECCIÓN
+   REDIRECCIÓN AL LOGIN
    ========================================================= */
 
 function redirectLogin(){
@@ -1174,9 +1201,7 @@ function redirectLogin(){
     const url =
         AUTH_PAGE +
         "?redirect=" +
-        encodeURIComponent(
-            current
-        );
+        encodeURIComponent(current);
 
     window.location.replace(
         url
@@ -1193,7 +1218,6 @@ async function loadAccount(){
     if(!token){
 
         redirectLogin();
-
         return;
     }
 
@@ -1212,7 +1236,6 @@ async function loadAccount(){
                 }
             );
 
-
         if(
             response.status === 401 ||
             response.status === 403
@@ -1226,58 +1249,49 @@ async function loadAccount(){
                 null;
 
             redirectLogin();
-
             return;
         }
-
 
         const data =
             await response.json();
 
-
-        if(
-            !response.ok
-        ){
+        if(!response.ok){
 
             throw new Error(
                 data.detail ||
-                T[lang].session
+                T[lang].network
             );
         }
-
 
         const user =
             data.user ||
             data;
 
-
         $("username").textContent =
             user.username ||
             "Usuario";
-
 
         $("email").textContent =
             user.email ||
             "";
 
-
         const pfp =
             user.pfp ||
             user.profile_picture;
 
-
         if(pfp){
 
             $("avatar").src =
-                pfp.startsWith("http")
+                /^https?:\/\//i.test(pfp)
                     ? pfp
                     : API_URL + pfp;
 
         }else{
 
-            $("avatar").src = "";
+            $("avatar").removeAttribute(
+                "src"
+            );
         }
-
 
     }catch(error){
 
@@ -1285,14 +1299,18 @@ async function loadAccount(){
             error
         );
 
-        $("username").textContent =
-            T[lang].session;
+        setStatus(
+            "deleteStatus",
+            error.message ||
+            T[lang].network,
+            "err"
+        );
     }
 }
 
 
 /* =========================================================
-   PFP
+   CAMBIAR PFP
    ========================================================= */
 
 async function changePfp(){
@@ -1302,10 +1320,8 @@ async function changePfp(){
         ""
     );
 
-
     const file =
         $("pfpFile").files[0];
-
 
     if(!file){
 
@@ -1318,14 +1334,12 @@ async function changePfp(){
         return;
     }
 
-
     const allowed = [
         "image/jpeg",
         "image/png",
         "image/webp",
         "image/gif"
     ];
-
 
     if(
         !allowed.includes(
@@ -1342,22 +1356,21 @@ async function changePfp(){
         return;
     }
 
-
     const fd =
         new FormData();
-
 
     fd.append(
         "profile_picture",
         file
     );
 
+    $("pfpBtn").disabled =
+        true;
 
     setStatus(
         "pfpStatus",
         T[lang].uploading
     );
-
 
     try{
 
@@ -1378,10 +1391,8 @@ async function changePfp(){
                 }
             );
 
-
         const data =
             await response.json();
-
 
         if(
             response.status === 401 ||
@@ -1396,14 +1407,10 @@ async function changePfp(){
                 null;
 
             redirectLogin();
-
             return;
         }
 
-
-        if(
-            !response.ok
-        ){
+        if(!response.ok){
 
             throw new Error(
                 data.detail ||
@@ -1411,20 +1418,16 @@ async function changePfp(){
             );
         }
 
-
         setStatus(
             "pfpStatus",
             T[lang].pfpOk,
             "ok"
         );
 
-
         $("pfpFile").value =
             "";
 
-
         await loadAccount();
-
 
     }catch(error){
 
@@ -1434,12 +1437,17 @@ async function changePfp(){
             T[lang].network,
             "err"
         );
+
+    }finally{
+
+        $("pfpBtn").disabled =
+            false;
     }
 }
 
 
 /* =========================================================
-   PASSWORD
+   CAMBIAR CONTRASEÑA
    ========================================================= */
 
 async function changePassword(){
@@ -1453,12 +1461,10 @@ async function changePassword(){
     const confirm =
         $("confirmPassword").value;
 
-
     setStatus(
         "passStatus",
         ""
     );
-
 
     if(
         !current ||
@@ -1475,7 +1481,6 @@ async function changePassword(){
         return;
     }
 
-
     if(
         next.length < 8
     ){
@@ -1488,7 +1493,6 @@ async function changePassword(){
 
         return;
     }
-
 
     if(
         next !== confirm
@@ -1503,10 +1507,8 @@ async function changePassword(){
         return;
     }
 
-
     const fd =
         new FormData();
-
 
     fd.append(
         "current_password",
@@ -1518,12 +1520,13 @@ async function changePassword(){
         next
     );
 
+    $("passBtn").disabled =
+        true;
 
     setStatus(
         "passStatus",
         T[lang].changing
     );
-
 
     try{
 
@@ -1544,14 +1547,26 @@ async function changePassword(){
                 }
             );
 
-
         const data =
             await response.json();
 
-
         if(
-            !response.ok
+            response.status === 401 ||
+            response.status === 403
         ){
+
+            localStorage.removeItem(
+                TOKEN_KEY
+            );
+
+            token =
+                null;
+
+            redirectLogin();
+            return;
+        }
+
+        if(!response.ok){
 
             throw new Error(
                 data.detail ||
@@ -1559,10 +1574,7 @@ async function changePassword(){
             );
         }
 
-
-        if(
-            data.token
-        ){
+        if(data.token){
 
             token =
                 data.token;
@@ -1582,7 +1594,6 @@ async function changePassword(){
                 null;
         }
 
-
         $("currentPassword").value =
             "";
 
@@ -1591,7 +1602,6 @@ async function changePassword(){
 
         $("confirmPassword").value =
             "";
-
 
         setStatus(
             "passStatus",
@@ -1607,17 +1617,22 @@ async function changePassword(){
             T[lang].network,
             "err"
         );
+
+    }finally{
+
+        $("passBtn").disabled =
+            false;
     }
 }
 
 
 /* =========================================================
-   DELETE MODAL
+   MODAL
    ========================================================= */
 
 function openDelete(){
 
-    $("deletePassword").value =
+    $("deleteConfirm").value =
         "";
 
     setStatus(
@@ -1628,8 +1643,12 @@ function openDelete(){
     $("deleteModal").classList.add(
         "open"
     );
-}
 
+    setTimeout(
+        () => $("deleteConfirm").focus(),
+        50
+    );
+}
 
 function closeDelete(){
 
@@ -1640,16 +1659,21 @@ function closeDelete(){
 
 
 /* =========================================================
-   DELETE ACCOUNT
+   ELIMINAR CUENTA
    ========================================================= */
 
 async function confirmDelete(){
 
-    const password =
-        $("deletePassword").value;
+    const expected =
+        T[lang].confirmDeleteWord;
 
+    const entered =
+        $("deleteConfirm").value.trim();
 
-    if(!password){
+    if(
+        entered.toUpperCase() !==
+        expected
+    ){
 
         setStatus(
             "modalStatus",
@@ -1660,22 +1684,13 @@ async function confirmDelete(){
         return;
     }
 
-
-    /*
-     * El endpoint actual del API usa
-     * el Bearer token para autenticar.
-     *
-     * La contraseña se conserva en
-     * la interfaz para confirmación local,
-     * pero no se manda a un campo que
-     * el backend no utiliza.
-     */
+    $("confirmDelete").disabled =
+        true;
 
     setStatus(
         "modalStatus",
         T[lang].deleting
     );
-
 
     try{
 
@@ -1694,21 +1709,32 @@ async function confirmDelete(){
                 }
             );
 
-
         const data =
             await response.json();
 
-
         if(
-            !response.ok
+            response.status === 401 ||
+            response.status === 403
         ){
+
+            localStorage.removeItem(
+                TOKEN_KEY
+            );
+
+            token =
+                null;
+
+            redirectLogin();
+            return;
+        }
+
+        if(!response.ok){
 
             throw new Error(
                 data.detail ||
                 T[lang].network
             );
         }
-
 
         localStorage.removeItem(
             TOKEN_KEY
@@ -1717,6 +1743,11 @@ async function confirmDelete(){
         token =
             null;
 
+        closeDelete();
+
+        alert(
+            T[lang].deletingSuccess
+        );
 
         window.location.replace(
             AUTH_PAGE
@@ -1730,6 +1761,11 @@ async function confirmDelete(){
             T[lang].network,
             "err"
         );
+
+    }finally{
+
+        $("confirmDelete").disabled =
+            false;
     }
 }
 
@@ -1766,7 +1802,6 @@ async function logout(){
         );
     }
 
-
     localStorage.removeItem(
         TOKEN_KEY
     );
@@ -1797,6 +1832,21 @@ $("langBtn").onclick =
 
         applyLanguage();
 
+        setStatus(
+            "pfpStatus",
+            ""
+        );
+
+        setStatus(
+            "passStatus",
+            ""
+        );
+
+        setStatus(
+            "modalStatus",
+            ""
+        );
+
         loadAccount();
     };
 
@@ -1823,6 +1873,21 @@ $("cancelDelete").onclick =
 
 $("confirmDelete").onclick =
     confirmDelete;
+
+
+$("deleteConfirm").addEventListener(
+    "keydown",
+    event => {
+
+        if(event.key === "Enter"){
+            confirmDelete();
+        }
+
+        if(event.key === "Escape"){
+            closeDelete();
+        }
+    }
+);
 
 
 $("deleteModal").onclick =
